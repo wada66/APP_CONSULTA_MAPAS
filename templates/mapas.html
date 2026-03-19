@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        <i class="fas fa-search text-primary me-2"></i>Consulta de Mapas
+                    </h2>
+                    <p class="text-muted mb-0">Use os filtros abaixo para encontrar mapas específicos</p>
+                </div>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p class="mt-3">Buscando mapas...</p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>Filtros de Busca
+                    </h5>
+                    <span class="badge bg-light text-dark">{{ mapas|length }} resultados</span>
+                </div>
+                <div class="card-body p-5">
+                    <form method="GET" action="{{ url_for('listar_mapas') }}" id="filtrosForm" onsubmit="showLoading()">
+                        <div class="row">
+                            <!-- Busca Rápida por Título -->
+                            <div class="col-12 mb-4">
+                                <div class="filtro-group">
+                                    <label for="titulo_mapa">
+                                        <i class="fas fa-heading"></i> Busca Rápida por Título
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               class="form-control form-control-custom" 
+                                               id="titulo_mapa" 
+                                               name="titulo_mapa" 
+                                               value="{{ filtros.get('titulo_mapa', '') }}"
+                                               placeholder="Digite palavras do título..."
+                                               aria-label="Busca por título">
+                                        <button class="btn btn-primary-custom" type="submit">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </button>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-info-circle"></i> A busca é case-insensitive e ignora acentos
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Filtros Específicos -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="id_mapa"><i class="fas fa-hashtag"></i> ID do Mapa</label>
+                                    <input type="number" 
+                                           class="form-control form-control-custom" 
+                                           id="id_mapa" 
+                                           name="id_mapa" 
+                                           value="{{ filtros.get('id_mapa', '') }}"
+                                           placeholder="Digite o ID" 
+                                           min="1">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="n_chamada_mapa"><i class="fas fa-file-alt"></i> Nº de Chamada</label>
+                                    <input type="text" 
+                                           class="form-control form-control-custom" 
+                                           id="n_chamada_mapa" 
+                                           name="n_chamada_mapa" 
+                                           value="{{ filtros.get('n_chamada_mapa', '') }}"
+                                           placeholder="Número de chamada">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="autor"><i class="fas fa-user-edit"></i> Autor/Cartógrafo</label>
+                                    <input type="text" 
+                                        class="form-control form-control-custom" 
+                                        id="autor" 
+                                        name="autor" 
+                                        value="{{ filtros.get('autor', '') }}"
+                                        placeholder="Digite nome do autor..."
+                                        aria-label="Busca por autor">
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-info-circle"></i> Busca inteligente
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="filtro-group">
+                                    <label for="local_id"><i class="fas fa-map-marker-alt"></i> Local</label>
+                                    <select name="local_id" class="form-control form-control-custom">
+                                        <option value="">Todos os locais...</option>
+                                        {% for local in locais %}
+                                        <option value="{{ local.id_local }}" 
+                                                {% if filtros.get('local_id')|string == local.id_local|string %}selected{% endif %}>
+                                            {{ local.nome_local }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="filtro-group">
+                                    <label for="area_id"><i class="fas fa-globe"></i> Área Geográfica</label>
+                                    <select name="area_id" class="form-control form-control-custom">
+                                        <option value="">Todas as áreas...</option>
+                                        {% for area in areas %}
+                                        <option value="{{ area.id_area_geografica }}" 
+                                                {% if filtros.get('area_id')|string == area.id_area_geografica|string %}selected{% endif %}>
+                                            {{ area.nome_area_geografica }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="filtro-group">
+                                    <label for="executor"><i class="fas fa-tools"></i> Executor</label>
+                                    <input type="text" 
+                                        class="form-control form-control-custom" 
+                                        id="executor" 
+                                        name="executor" 
+                                        value="{{ filtros.get('executor', '') }}"
+                                        placeholder="Digite nome do executor...">
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-info-circle"></i> Instituição/empresa executora
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Data -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label><i class="fas fa-calendar-alt"></i> Data (Mês/Ano)</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="number" 
+                                                   class="form-control form-control-custom" 
+                                                   name="mes" 
+                                                   value="{{ filtros.get('mes', '') }}" 
+                                                   placeholder="Mês (1-12)" 
+                                                   min="1" 
+                                                   max="12">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" 
+                                                   class="form-control form-control-custom" 
+                                                   name="ano" 
+                                                   value="{{ filtros.get('ano', '') }}" 
+                                                   placeholder="Ano" 
+                                                   min="1500" 
+                                                   max="2100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Escala -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="escala_mapa"><i class="fas fa-ruler"></i> Escala</label>
+                                    <input type="text" 
+                                           class="form-control form-control-custom" 
+                                           id="escala_mapa" 
+                                           name="escala_mapa" 
+                                           value="{{ filtros.get('escala_mapa', '') }}"
+                                           placeholder="Ex: 1:50.000, 1:100.000">
+                                </div>
+                            </div>
+
+                            <!-- Projeção -->
+                            <div class="col-md-4">
+                                <div class="filtro-group">
+                                    <label for="projecao_mapa"><i class="fas fa-draw-polygon"></i> Projeção</label>
+                                    <select name="projecao_mapa" class="form-control form-control-custom">
+                                        <option value="">Todas...</option>
+                                        <option value="UTM" {% if filtros.get('projecao_mapa') == 'UTM' %}selected{% endif %}>UTM</option>
+                                        <option value="CÔN" {% if filtros.get('projecao_mapa') == 'CÔN' %}selected{% endif %}>Cônica</option>
+                                        <option value="POL" {% if filtros.get('projecao_mapa') == 'POL' %}selected{% endif %}>Polar</option>
+                                        <option value="MER" {% if filtros.get('projecao_mapa') == 'MER' %}selected{% endif %}>Mercator</option>
+                                        <option value="AZI" {% if filtros.get('projecao_mapa') == 'AZI' %}selected{% endif %}>Azimutal</option>
+                                        <option value="OUT" {% if filtros.get('projecao_mapa') == 'OUT' %}selected{% endif %}>Outra</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Setor -->
+                            <div class="col-md-4">
+                                <div class="filtro-group">
+                                    <label for="setor_mapa"><i class="fas fa-building"></i> Setor</label>
+                                    <input type="text" 
+                                           class="form-control form-control-custom" 
+                                           id="setor_mapa" 
+                                           name="setor_mapa" 
+                                           value="{{ filtros.get('setor_mapa', '') }}"
+                                           placeholder="Setor do mapa">
+                                </div>
+                            </div>
+
+                            <!-- Conteúdo -->
+                            <div class="col-md-4">
+                                <div class="filtro-group">
+                                    <label for="conteudo_mapa"><i class="fas fa-file-text"></i> Conteúdo</label>
+                                    <input type="text" 
+                                        class="form-control form-control-custom" 
+                                        id="conteudo_mapa" 
+                                        name="conteudo_mapa" 
+                                        value="{{ filtros.get('conteudo_mapa', '') }}"
+                                        placeholder="Digite palavras do conteúdo...">
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-info-circle"></i> Descrição do mapa
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Coordenadas -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label><i class="fas fa-map-pin"></i> Coordenadas</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="text" 
+                                                   class="form-control form-control-custom" 
+                                                   name="latitude_mapa" 
+                                                   value="{{ filtros.get('latitude_mapa', '') }}" 
+                                                   placeholder="Latitude">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" 
+                                                   class="form-control form-control-custom" 
+                                                   name="longitude_mapa" 
+                                                   value="{{ filtros.get('longitude_mapa', '') }}" 
+                                                   placeholder="Longitude">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Articulação -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="articulacao_mapa"><i class="fas fa-th"></i> Articulação</label>
+                                    <input type="text" 
+                                           class="form-control form-control-custom" 
+                                           id="articulacao_mapa" 
+                                           name="articulacao_mapa" 
+                                           value="{{ filtros.get('articulacao_mapa', '') }}"
+                                           placeholder="Articulação do mapa">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <button type="submit" class="btn btn-primary-custom me-2">
+                                            <i class="fas fa-search me-1"></i> Aplicar Filtros
+                                        </button>
+                                        <a href="{{ url_for('listar_mapas') }}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-redo me-1"></i> Limpar Filtros
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-alt me-2"></i>Resultados da Busca
+                        <span class="badge bg-light text-dark ms-2">{{ mapas|length }}</span>
+                    </h5>
+                    
+                    {% if filtros %}
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3">
+                            <i class="fas fa-filter me-1"></i>Filtros aplicados
+                        </small>
+                        {% for key, value in filtros.items() %}
+                        <span class="badge bg-info me-1">{{ key }}: {{ value }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body p-5">
+                    {% if mapas %}
+                    <div class="mapas-list">
+                        {% for mapa in mapas %}
+                        <div class="livro-card-modern">
+                            <div class="livro-header-modern">
+                                <div>
+                                    <h4 class="mb-0">#{{ mapa.id_mapa }} - {{ mapa.titulo_mapa or '(Sem título)' }}</h4>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <span class="livro-chamada-modern me-3">
+                                            <i class="fas fa-file-alt me-1"></i>{{ mapa.n_chamada_mapa or 'N/A' }}
+                                        </span>
+                                        {% if mapa.data_mapa %}
+                                        <span class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>{{ mapa.data_mapa.strftime('%d/%m/%Y') }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#detalhes{{ mapa.id_mapa }}">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="livro-tags-modern">
+                                {% if mapa.local %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ mapa.local.nome_local }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if mapa.escala_mapa %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-ruler me-1"></i>Escala: {{ mapa.escala_mapa }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if mapa.projecao_mapa %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-draw-polygon me-1"></i>Proj: {{ mapa.projecao_mapa }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if mapa.autores %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-users me-1"></i>{{ mapa.autores|length }} autor(es)
+                                </span>
+                                {% endif %}
+                                
+                                {% if mapa.executores %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-tools me-1"></i>{{ mapa.executores|length }} executor(es)
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            {% if mapa.conteudo_mapa %}
+                            <p class="mb-2">
+                                <strong><i class="fas fa-align-left me-1"></i>Conteúdo:</strong> 
+                                {{ mapa.conteudo_mapa[:150] }}{% if mapa.conteudo_mapa|length > 150 %}...{% endif %}
+                            </p>
+                            {% endif %}
+                            
+                            <div class="collapse mt-3" id="detalhes{{ mapa.id_mapa }}">
+                                <div class="card card-body border-0 bg-light">
+                                    <h6><i class="fas fa-info-circle me-1"></i>Detalhes Completos</h6>
+                                    
+                                    <div class="row mt-2">
+                                        {% if mapa.autores %}
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Autores/Cartógrafos:</strong></p>
+                                            <ul class="list-unstyled">
+                                                {% for autor in mapa.autores %}
+                                                <li>
+                                                    <i class="fas fa-user me-1"></i>{{ autor.nome_autor }} 
+                                                    <span class="badge bg-secondary">{{ autor.tipo_autor }}</span>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if mapa.executores %}
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Executores:</strong></p>
+                                            <ul class="list-unstyled">
+                                                {% for executor in mapa.executores %}
+                                                <li><i class="fas fa-toolbox me-1"></i>{{ executor.nome_executor }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if mapa.areas_geograficas %}
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Áreas Geográficas:</strong></p>
+                                            <ul class="list-unstyled">
+                                                {% for area in mapa.areas_geograficas %}
+                                                <li><i class="fas fa-globe me-1"></i>{{ area.nome_area_geografica }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <div class="col-12">
+                                            <p class="mb-1"><strong>Informações cartográficas:</strong></p>
+                                            <ul class="list-unstyled">
+                                                {% if mapa.escala_mapa %}<li><i class="fas fa-ruler me-1"></i>Escala: {{ mapa.escala_mapa }}</li>{% endif %}
+                                                {% if mapa.projecao_mapa %}<li><i class="fas fa-draw-polygon me-1"></i>Projeção: {{ mapa.projecao_mapa }}</li>{% endif %}
+                                                {% if mapa.articulacao_mapa %}<li><i class="fas fa-th me-1"></i>Articulação: {{ mapa.articulacao_mapa }}</li>{% endif %}
+                                                {% if mapa.latitude_mapa %}<li><i class="fas fa-arrow-up me-1"></i>Latitude: {{ mapa.latitude_mapa }}</li>{% endif %}
+                                                {% if mapa.longitude_mapa %}<li><i class="fas fa-arrow-right me-1"></i>Longitude: {{ mapa.longitude_mapa }}</li>{% endif %}
+                                                {% if mapa.colacao_mapa %}<li><i class="fas fa-pager me-1"></i>Colação: {{ mapa.colacao_mapa }}</li>{% endif %}
+                                                {% if mapa.aquisicao_mapa %}<li><i class="fas fa-shopping-cart me-1"></i>Aquisição: {{ mapa.aquisicao_mapa }}</li>{% endif %}
+                                                {% if mapa.elaboracao_mapa %}<li><i class="fas fa-pen-fancy me-1"></i>Elaboração: {{ mapa.elaboracao_mapa }}</li>{% endif %}
+                                                {% if mapa.fonte_mapa %}<li><i class="fas fa-database me-1"></i>Fonte: {{ mapa.fonte_mapa }}</li>{% endif %}
+                                                {% if mapa.setor_mapa %}<li><i class="fas fa-building me-1"></i>Setor: {{ mapa.setor_mapa }}</li>{% endif %}
+                                            </ul>
+                                        </div>
+                                        
+                                        {% if mapa.assunto_mapa %}
+                                        <div class="col-12">
+                                            <p class="mb-1"><strong>Assunto:</strong></p>
+                                            <p class="mb-0">{{ mapa.assunto_mapa[:300] }}{% if mapa.assunto_mapa|length > 300 %}...{% endif %}</p>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if mapa.nota_geral_mapa %}
+                                        <div class="col-12">
+                                            <p class="mb-1"><strong>Notas Gerais:</strong></p>
+                                            <p class="mb-0">{{ mapa.nota_geral_mapa }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">Nenhum mapa encontrado</h4>
+                        <p class="text-muted">Tente ajustar os filtros da sua busca</p>
+                        <a href="{{ url_for('listar_mapas') }}" class="btn btn-primary-custom mt-2">
+                            <i class="fas fa-redo me-1"></i> Limpar Filtros
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.select2-autor').select2({
+        theme: 'bootstrap-5',
+        placeholder: "Selecione...",
+        allowClear: true,
+        language: "pt-BR",
+        width: '100%'
+    });
+    
+    window.showLoading = function() {
+        $('#loadingSpinner').fadeIn();
+    }
+    
+    $(window).on('load', function() {
+        $('#loadingSpinner').fadeOut();
+    });
+    
+    $('.livro-card-modern').each(function(i) {
+        $(this).delay(i * 100).animate({ opacity: 1 }, 500);
+    });
+});
+</script>
+{% endblock %}
