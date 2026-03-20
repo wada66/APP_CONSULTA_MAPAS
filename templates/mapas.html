@@ -154,15 +154,6 @@
                                         <div class="col-6">
                                             <input type="number" 
                                                    class="form-control form-control-custom" 
-                                                   name="mes" 
-                                                   value="{{ filtros.get('mes', '') }}" 
-                                                   placeholder="Mês (1-12)" 
-                                                   min="1" 
-                                                   max="12">
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="number" 
-                                                   class="form-control form-control-custom" 
                                                    name="ano" 
                                                    value="{{ filtros.get('ano', '') }}" 
                                                    placeholder="Ano" 
@@ -183,22 +174,6 @@
                                            name="escala_mapa" 
                                            value="{{ filtros.get('escala_mapa', '') }}"
                                            placeholder="Ex: 1:50.000, 1:100.000">
-                                </div>
-                            </div>
-
-                            <!-- Projeção -->
-                            <div class="col-md-4">
-                                <div class="filtro-group">
-                                    <label for="projecao_mapa"><i class="fas fa-draw-polygon"></i> Projeção</label>
-                                    <select name="projecao_mapa" class="form-control form-control-custom">
-                                        <option value="">Todas...</option>
-                                        <option value="UTM" {% if filtros.get('projecao_mapa') == 'UTM' %}selected{% endif %}>UTM</option>
-                                        <option value="CÔN" {% if filtros.get('projecao_mapa') == 'CÔN' %}selected{% endif %}>Cônica</option>
-                                        <option value="POL" {% if filtros.get('projecao_mapa') == 'POL' %}selected{% endif %}>Polar</option>
-                                        <option value="MER" {% if filtros.get('projecao_mapa') == 'MER' %}selected{% endif %}>Mercator</option>
-                                        <option value="AZI" {% if filtros.get('projecao_mapa') == 'AZI' %}selected{% endif %}>Azimutal</option>
-                                        <option value="OUT" {% if filtros.get('projecao_mapa') == 'OUT' %}selected{% endif %}>Outra</option>
-                                    </select>
                                 </div>
                             </div>
 
@@ -323,7 +298,7 @@
                                         </span>
                                         {% if mapa.data_mapa %}
                                         <span class="text-muted">
-                                            <i class="fas fa-calendar me-1"></i>{{ mapa.data_mapa.strftime('%d/%m/%Y') }}
+                                            <i class="fas fa-calendar me-1"></i>{{ mapa.data_mapa.strftime('%Y') }}
                                         </span>
                                         {% endif %}
                                     </div>

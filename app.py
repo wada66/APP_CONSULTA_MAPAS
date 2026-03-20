@@ -148,22 +148,14 @@ def listar_mapas():
                 pass
 
         # Filtro por Data
-        if 'mes' in request.args and request.args['mes']:
-            mes = request.args['mes']
-            ano = request.args.get('ano', '')
-            if mes.isdigit():
-                mes_int = int(mes)
-                if ano.isdigit():
-                    ano_int = int(ano)
-                    query = query.filter(
-                        extract('month', Mapa.data_mapa) == mes_int,
-                        extract('year', Mapa.data_mapa) == ano_int
-                    )
-                    filtros['mes'] = mes
-                    filtros['ano'] = ano
-                else:
-                    query = query.filter(extract('month', Mapa.data_mapa) == mes_int)
-                    filtros['mes'] = mes
+        ano = request.args.get('ano', '')
+        if ano.isdigit():
+            ano_int = int(ano)
+            query = query.filter(
+                extract('year', Mapa.data_mapa) == ano_int
+            )
+            filtros['ano'] = ano
+        
 
         # Filtro por Conteúdo
         if 'conteudo_mapa' in request.args and request.args['conteudo_mapa']:
